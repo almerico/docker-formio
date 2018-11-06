@@ -1,0 +1,62 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ include "formio.fullname" . }}
+  labels:
+    app: {{ include "formio.name" . }}
+    chart: {{ include "formio.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "formio.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "formio.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+    {{- if .Values.initEnv.WAIT_HOSTS }}
+      initContainers:
+        - name: init-container
+          image: introproventures/emailbpm-docker-wait-for-it:0.0.1
+          command: ['/usr/local/bin/bash', '-c', '/wait-for-it.sh {{ tpl .Values.initEnv.WAIT_HOSTS . }}']
+          imagePullPolicy: IfNotPresent
+    {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+{{- with .Values.extraEnv }}
+{{ tpl . $ | indent 12 }}
+{{- end }}
+          ports:
+            - name: http
+              containerPort: 3001
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

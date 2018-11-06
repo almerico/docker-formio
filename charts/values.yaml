@@ -1,0 +1,77 @@
+# Default values for formio.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: introproventures/docker-formio
+  tag: 3.0.0
+  pullPolicy: Always
+
+nameOverride: ""
+fullnameOverride: ""
+extraEnv: |
+   - name: DB_HOST
+     value: "formio-db-mongo"
+   - name: VIRTUAL_PORT
+     value: "3001"
+   - name: FORMIO_PROTOCOL
+     value: "http"
+   - name: ROOT_EMAIL
+     value: "admin@example.com"
+   - name: ROOT_PASS
+     value: "password"
+   - name: DEBUG_MODE
+     value: "FALSE"
+   - name: PROJECT_TEMPLATE
+     value: "default"
+   - name: MONGO
+     value: "mongodb://formio:password@formioapi-formio-db-mongo:27017/formioapp"
+
+service:
+  type: ClusterIP
+  port: 3001
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+initEnv:
+  WAIT_HOSTS: "formioapi-formio-db-mongo:27017"
+
+formio-db-mongo:
+   persistence:
+     enabled: true
+   name: formio-db-mongo
+   usePassword: true
+   mongodbDatabase: formioapp
+   mongodbUsername: formio
+   mongodbPassword: password

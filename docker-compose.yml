@@ -1,0 +1,69 @@
+version: '2'
+
+services:
+  
+  formio-api-app:
+    image: docker-formio
+    build: .
+    container_name: formio-api-app
+    ports:
+      - 3001:3001
+    volumes:
+    - ./templates:/app/templates
+    environment:
+    - VIRTUAL_HOST=127.0.0.1.nip.io
+    - VIRTUAL_NETWORK=nginx-proxy
+    - VIRTUAL_PORT=3001
+    - FORMIO_PROTOCOL=http
+    #- LETSENCRYPT_HOST=formio.example.com
+    #- LETSENCRYPT_EMAIL=email@example.com
+
+    - ZABBIX_HOSTNAME=formio-app
+
+    - DB_HOST=formio-db-mongo
+
+    - ROOT_EMAIL=admin@example.com
+    - ROOT_PASS=password
+
+    - DEBUG_MODE=FALSE
+    - PROJECT_TEMPLATE=default
+    networks:
+      - proxy-tier
+    restart: always
+
+  formio-db-mongo:
+    container_name: formio-db-mongo
+    image: mongo
+    restart: unless-stopped
+    volumes:
+     - formio-db-mongo
+    command: mongod --smallfiles
+    networks:
+      - proxy-tier
+    environment:
+      - ZABBIX_HOSTNAME=formio-db-mongo
+
+  # formio-db-mongo-backup:
+  #   container_name: formio-db-mongo-backup
+  #   image: tiredofit/db-backup
+  #   links:
+  #    - formio-db-mongo
+  #   volumes:
+  #     - ./dbbackup:/backups
+  #   environment:
+  #     - DB_TYPE=mongo
+  #     - DB_HOST=formio-db-mongo
+  #     - DB_DUMP_FREQ=1440
+  #     - DB_DUMP_BEGIN=0000
+  #     - DB_CLEANUP_TIME=8640
+  #     - MD5=TRUE
+  #     - COMPRESSION=GZ
+
+  #   restart: always
+
+volumes:
+  formio-db-mongo:
+
+networks:
+  proxy-tier:
+    
